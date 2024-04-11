@@ -8,8 +8,10 @@ import pathlib
 import shutil
 from tqdm.auto import tqdm
 
+
 def get_random_hex(length):
     return ''.join([random.choice("0123456789abcdef") for _ in range(length)])
+
 
 BASE_URL = "https://backapi.rustore.ru/"
 
@@ -24,10 +26,12 @@ MIMIC_HEADERS = {
     "User-Agent": "okhttp/4.10.0"
 }
 
+
 def get_appid(package_name):
     info_url = BASE_URL + "applicationData/overallInfo/" + package_name
     response = requests.get(info_url, headers=MIMIC_HEADERS)
     return response.json()["body"]["appId"]
+
 
 def get_download_links(app_id):
     download_url = BASE_URL + "applicationData/v2/download-link"
@@ -39,6 +43,7 @@ def get_download_links(app_id):
     response = requests.post(download_url, headers=MIMIC_HEADERS, json=json_data)
     urls = response.json()["body"]["downloadUrls"]
     return [url["url"] for url in urls]
+
 
 def download_file(url, filename):
     response = requests.get(url, stream=True, allow_redirects=True)
@@ -56,9 +61,10 @@ def download_file(url, filename):
         with tqdm.wrapattr(response.raw, "read", total=file_size, desc=desc) as r_raw:
             with path.open("wb") as f:
                 shutil.copyfileobj(r_raw, f)
-    except:
+    except Exception:
         path.unlink()
     return path
+
 
 def download_package(package_name):
     print(f"Downloading package: {package_name}")
@@ -67,6 +73,7 @@ def download_package(package_name):
     for download_link in download_links:
         download_file(download_link, package_name + ".apk")
     print("Done!")
+
 
 def search():
     query = input("Query> ")
@@ -93,8 +100,9 @@ def search():
             return
         except KeyboardInterrupt:
             return
-        except:
+        except Exception:
             page_number += 1
+
 
 def main():
     parser = argparse.ArgumentParser("rustoredl", description="Downloads an Android application by given package name from RuStore")
@@ -105,7 +113,7 @@ def main():
 
     parsed_args = parser.parse_args()
 
-    if parsed_args.sub == None:
+    if parsed_args.sub is None:
         parser.print_help()
         return
 
@@ -113,6 +121,7 @@ def main():
         search()
     if parsed_args.sub == "download":
         download_package(parsed_args.sub.package_name)
+
 
 if __name__ == "__main__":
     main()
