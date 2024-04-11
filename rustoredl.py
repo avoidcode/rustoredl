@@ -1,4 +1,4 @@
-#!/bin/python3
+#!/usr/bin/python3
 
 import requests
 import argparse
@@ -120,7 +120,7 @@ def main():
     if parsed_args.sub == "search":
         search()
     if parsed_args.sub == "download":
-        download_package(parsed_args.sub.package_name)
+        download_package(parsed_args.package_name)
 
 
 if __name__ == "__main__":
