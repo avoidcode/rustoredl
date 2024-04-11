@@ -52,9 +52,12 @@ def download_file(url, filename):
 
     desc = "(Unknown total file size)" if file_size == 0 else ""
     response.raw.read = functools.partial(response.raw.read, decode_content=True)
-    with tqdm.wrapattr(response.raw, "read", total=file_size, desc=desc) as r_raw:
-        with path.open("wb") as f:
-            shutil.copyfileobj(r_raw, f)
+    try:
+        with tqdm.wrapattr(response.raw, "read", total=file_size, desc=desc) as r_raw:
+            with path.open("wb") as f:
+                shutil.copyfileobj(r_raw, f)
+    except:
+        path.unlink()
     return path
 
 def download_package(package_name):
@@ -63,9 +66,10 @@ def download_package(package_name):
     download_links = get_download_links(app_id)
     for download_link in download_links:
         download_file(download_link, package_name + ".apk")
+    print("Done!")
 
 def search():
-    query = input("[Query?] > ")
+    query = input("Query> ")
     search_url = BASE_URL + "applicationData/apps"
     page_number = 0
     while True:
@@ -79,13 +83,14 @@ def search():
         print(f"Page {page_number+1}")
         for i, app in enumerate(apps):
             print(f"[{(i+1)}]\u2501\u2533\u2501[{app['appName']}]")
-            print("      \u2523\u2501 Package: " + app["packageName"])
-            print("      \u2523\u2501 Company: " + app["companyName"])
-            print("      \u2523\u2501 Version: " + str(app["versionCode"]))
-            print("      \u2517\u2501 Description: " + app["shortDescription"])
+            print("    \u2523\u2501 Package: " + app["packageName"])
+            print("    \u2523\u2501 Company: " + app["companyName"])
+            print("    \u2523\u2501 Version: " + str(app["versionCode"]))
+            print("    \u2517\u2501 Description: " + app["shortDescription"])
         try:
             selection = int(input(f"[1-{len(apps)}]> ")) - 1
             download_package(apps[selection]["packageName"])
+            return
         except KeyboardInterrupt:
             return
         except:
