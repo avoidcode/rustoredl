@@ -70,8 +70,14 @@ def download_package(package_name):
     print(f"Downloading package: {package_name}")
     app_id = get_appid(package_name)
     download_links = get_download_links(app_id)
-    for download_link in download_links:
-        download_file(download_link, package_name + ".apk")
+    for i, download_link in enumerate(download_links):
+        source = download_link[(download_link.rfind("/")+1):]
+        destination = package_name + f".{i+1}.apk"
+        if ("/apk/" in download_link):
+            print(f"Downloading [{source}] -> [{destination}]")
+            download_file(download_link, destination)
+        else:
+            print(f"Skipping non-apk [{source}]")
     print("Done!")
 
 
