@@ -68,22 +68,28 @@ def download_file(url, filename):
         sys.exit()
 
 
-def download_package(package_name):
-    print(f"Downloading package: {package_name}")
+def download_package(package_name, link_only):
+    if link_only:
+        print(f"Getting links for [{package_name}]")
+    else:
+        print(f"Downloading package: {package_name}")
     app_id = get_appid(package_name)
     download_links = get_download_links(app_id)
     for i, download_link in enumerate(download_links):
-        source = download_link[(download_link.rfind("/")+1):]
-        destination = package_name + f".{i+1}.apk"
-        if ("/apk/" in download_link):
-            print(f"Downloading [{source}] -> [{destination}]")
-            download_file(download_link, destination)
+        if link_only:
+            print(f"[{i}] {download_link}")
         else:
-            print(f"Skipping non-apk [{source}]")
+            source = download_link[(download_link.rfind("/")+1):]
+            destination = package_name + f".{i+1}.apk"
+            if ("/apk/" in download_link):
+                print(f"Downloading [{source}] -> [{destination}]")
+                download_file(download_link, destination)
+            else:
+                print(f"Skipping non-apk [{source}]")
     print("Done!")
 
 
-def search():
+def search(link_only):
     try:
         query = input("Query> ")
     except:
@@ -107,7 +113,7 @@ def search():
             print("    \u2517\u2501 Description: " + app["shortDescription"])
         try:
             selection = int(input(f"[1-{len(apps)}]> ")) - 1
-            download_package(apps[selection]["packageName"])
+            download_package(apps[selection]["packageName"], link_only)
             return
         except (SystemExit, KeyboardInterrupt):
             sys.exit()
@@ -117,6 +123,7 @@ def search():
 
 def main():
     parser = argparse.ArgumentParser("rustoredl", description="Downloads an Android application by given package name from RuStore")
+    parser.add_argument("-l", "--link-only", help="Get direct download link, skip downloading", action='store_true')
     subparsers = parser.add_subparsers(dest="sub")
     search_parser = subparsers.add_parser("search", help="Search packages on RuStore by name")
     download_parser = subparsers.add_parser("download", help="Download apk by package name immediately")
@@ -127,11 +134,10 @@ def main():
     if parsed_args.sub is None:
         parser.print_help()
         return
-
     if parsed_args.sub == "search":
-        search()
+        search(parsed_args.link_only)
     if parsed_args.sub == "download":
-        download_package(parsed_args.package_name)
+        download_package(parsed_args.package_name, parsed_args.link_only)
 
 
 if __name__ == "__main__":
