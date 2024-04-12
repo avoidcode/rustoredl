@@ -6,6 +6,7 @@ import random
 import functools
 import pathlib
 import shutil
+import sys
 from tqdm.auto import tqdm
 
 
@@ -55,15 +56,16 @@ def download_file(url, filename):
     path = pathlib.Path(filename).expanduser().resolve()
     path.parent.mkdir(parents=True, exist_ok=True)
 
-    desc = "(Unknown total file size)" if file_size == 0 else ""
-    response.raw.read = functools.partial(response.raw.read, decode_content=True)
     try:
+        desc = "(Unknown total file size)" if file_size == 0 else ""
+        response.raw.read = functools.partial(response.raw.read, decode_content=True)
         with tqdm.wrapattr(response.raw, "read", total=file_size, desc=desc) as r_raw:
             with path.open("wb") as f:
                 shutil.copyfileobj(r_raw, f)
-    except Exception:
+    except:
+        print("Download interrupted.")
         path.unlink()
-    return path
+        sys.exit()
 
 
 def download_package(package_name):
@@ -82,7 +84,10 @@ def download_package(package_name):
 
 
 def search():
-    query = input("Query> ")
+    try:
+        query = input("Query> ")
+    except:
+        exit(-1)
     search_url = BASE_URL + "applicationData/apps"
     page_number = 0
     while True:
@@ -93,7 +98,7 @@ def search():
             "buyeruid": "null",
         })
         apps = response.json()["body"]["content"]
-        print(f"Page {page_number+1}")
+        print(f"Page [{page_number+1}]")
         for i, app in enumerate(apps):
             print(f"[{(i+1)}]\u2501\u2533\u2501[{app['appName']}]")
             print("    \u2523\u2501 Package: " + app["packageName"])
@@ -104,9 +109,9 @@ def search():
             selection = int(input(f"[1-{len(apps)}]> ")) - 1
             download_package(apps[selection]["packageName"])
             return
-        except KeyboardInterrupt:
-            return
-        except Exception:
+        except (SystemExit, KeyboardInterrupt):
+            sys.exit()
+        except:
             page_number += 1
 
 
