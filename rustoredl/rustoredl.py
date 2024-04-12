@@ -69,11 +69,15 @@ def download_file(url, filename):
 
 
 def download_package(package_name, link_only):
+    try:
+        app_id = get_appid(package_name)
+    except:
+        print(f"Package [{package_name}] could not be found")
+        sys.exit(-1)
     if link_only:
-        print(f"Getting links for [{package_name}]")
+        print(f"Getting links for [{package_name}]...")
     else:
-        print(f"Downloading package: {package_name}")
-    app_id = get_appid(package_name)
+        print(f"Downloading package [{package_name}]...")
     download_links = get_download_links(app_id)
     for i, download_link in enumerate(download_links):
         if link_only:
@@ -134,6 +138,7 @@ def main():
     if parsed_args.sub is None:
         parser.print_help()
         return
+    
     if parsed_args.sub == "search":
         search(parsed_args.link_only)
     if parsed_args.sub == "download":
