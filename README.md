@@ -1,38 +1,28 @@
-# RuStoreDL
-Утилита для быстрого поиска и скачивания пакетов приложений Android (.apk) из RuStore
+## RuStoreDL
+Утилита для быстрого поиска и скачивания пакетов приложений Android (.apk) из RuStore. Поддреживаемая версия Python $\geq$ 3.6
 
 ### Установка
 
-Клонируем репозиторий
+```sh
+git clone https://github.com/avoidcode/rustoredl.git
+```
+Установка с помощью `pip3`
 
+```sh
+cd rustoredl
+pip install .
 ```
-$ git clone https://github.com/avoidcode/rustoredl.git
-```
-
-Устанавливаем с помощью `pip`
-
-```
-$ cd rustoredl
-$ pip install .
-```
-или `setuptools`
-```
-$ python setup.py install
+Установка с помощью `setuptools`
+```sh
+cd rustoredl
+python setup.py install
 ```
 
-## Использование
-
-### Поиск
-
-![image](https://github.com/avoidcode/rustoredl/assets/51087676/8140f5e0-82df-4b5b-859d-541352c96417)
-
-### Скачивание по имени пакета
-
-![image](https://github.com/avoidcode/rustoredl/assets/51087676/07ff9e69-a3a8-4863-ab30-35ec01da5494)
+### Использование
 
 ```
 $ rustoredl --help
-usage: rustoredl [-h] {search,download} ...
+usage: rustoredl [-h] [-l] {search,download} ...
 
 Downloads an Android application by given package name from RuStore
 
@@ -43,4 +33,14 @@ positional arguments:
 
 options:
   -h, --help         show this help message and exit
+  -l, --link-only    Get direct download link, skip downloading
 ```
+
+### Поиск
+
+![image](https://github.com/avoidcode/rustoredl/assets/51087676/dff3782c-db5e-4951-94d0-ec6f00d2f34d)
+
+
+### Скачивание по имени пакета
+
+![image](https://github.com/avoidcode/rustoredl/assets/51087676/07ff9e69-a3a8-4863-ab30-35ec01da5494)
