@@ -1,13 +1,14 @@
 #!/usr/bin/python3
 
+import os
+import shutil
+import pathlib
 import requests
 import argparse
 import functools
-import pathlib
-import shutil
-import sys
-import os
+from colorama import Fore, Style
 from tqdm.auto import tqdm
+from datetime import datetime
 
 from util import *
 
@@ -25,11 +26,14 @@ MIMIC_HEADERS = {
 }
 
 
-def get_appid(package_name):
-    info_url = BASE_URL + "applicationData/overallInfo/" + package_name
-    response = requests.get(info_url, headers=MIMIC_HEADERS)
-    debug_print(response.json())
-    return response.json()["body"]["appId"]
+def get_app_info(package_name):
+    try:
+        info_url = BASE_URL + "applicationData/overallInfo/" + package_name
+        response = requests.get(info_url, headers=MIMIC_HEADERS).json()
+        debug_print(response)
+        return response["body"]
+    except:
+        raise NoSuchPackageException(f"Package [{package_name}] could not be found")
 
 
 def get_download_links(app_id):
@@ -39,21 +43,17 @@ def get_download_links(app_id):
         "firstInstall": False,
         "withoutSplits": False
     }
-    response = requests.post(download_url, headers=MIMIC_HEADERS, json=json_data)
-    debug_print(response.json())
-    urls = response.json()["body"]["downloadUrls"]
+    response = requests.post(download_url, headers=MIMIC_HEADERS, json=json_data).json()
+    debug_print(response)
+    urls = response["body"]["downloadUrls"]
     return [url["url"] for url in urls]
 
 
 def download_file(url, filename):
-    response = requests.get(url, stream=True, allow_redirects=True)
-    if response.status_code != 200:
-        response.raise_for_status()
-        raise RuntimeError(f"Request to {url} returned status code {response.status_code}")
+    response = requests.get(url, stream=True)
     file_size = int(response.headers.get('Content-Length', 0))
 
     path = pathlib.Path(filename).resolve()
-    path.parent.mkdir(parents=True, exist_ok=True)
 
     try:
         desc = "(Unknown total file size)" if file_size == 0 else ""
@@ -62,39 +62,34 @@ def download_file(url, filename):
             with path.open("wb") as destination:
                 shutil.copyfileobj(r_raw, destination)
     except:
-        print("Download interrupted.")
         path.unlink()
-        sys.exit()
+        raise DownloadInterruptException("Download interrupted.")
 
 
 def print_links(package_name):
-    try:
-        app_id = get_appid(package_name)
-    except:
-        print(f"Package [{package_name}] could not be found")
-        sys.exit(-1)
-    print(f"Getting links for [{package_name}]...")
-    download_links = get_download_links(app_id)
+    app_info = get_app_info(package_name)
+    print(f"Getting links for [{package_name}] version [{app_info['versionName']}]...")
+    download_links = get_download_links(app_info["appId"])
     for i, download_link in enumerate(download_links):
         print(f"[{i}] {download_link}")
 
 
 def download_package(package_name):
-    try:
-        app_id = get_appid(package_name)
-    except:
-        print(f"Package [{package_name}] could not be found")
-        sys.exit(-1)
-    print(f"Downloading package [{package_name}]...")
-    download_links = get_download_links(app_id)
+    app_info = get_app_info(package_name)
+    print(f"Downloading package [{package_name}] version [{app_info['versionName']}]...")
+    download_links = get_download_links(app_info["appId"])
+    
+    if len(download_links) > 1:
+        print("Seems like application is a split bundle. Downloading all files...")
+
     for i, download_link in enumerate(download_links):
-        source = download_link[(download_link.rfind("/")+1):]
-        destination = os.path.basename(package_name + f".{i+1}.apk")
+        source_name = download_link[(download_link.rfind("/") + 1):]
+        destination = os.path.basename(package_name + f".{i+1}" + pathlib.Path(source_name).suffix)
         if ("/apk/" in download_link):
-            print(f"Downloading [{source}] -> [{destination}]")
+            print(f"Downloading [{download_link}] -> [{destination}]")
             download_file(download_link, destination)
         else:
-            print(f"Skipping non-apk [{source}]")
+            print(f"Skipping non-apk [{download_link}]")
     print("Done!")
 
 
@@ -111,50 +106,87 @@ def search_apps(query, page_number):
     return apps
 
 
-def search():
-    try:
-        query = input("Query> ")
-    except:
-        sys.exit(-1)
+def search(link_only):
+    query = input("Query> ")
     page_number = 0
     while True:
         apps = search_apps(query, page_number)
-        print(f"Page [{page_number+1}]")
+        print(Fore.LIGHTBLACK_EX + f"Page [{page_number+1}]" + Style.RESET_ALL)
         for i, app in enumerate(apps):
-            print(f"[{(i+1)}]\u2501\u2533\u2501[{app['appName']}]")
-            print("    \u2523\u2501 Package: " + app["packageName"])
+            print(f"[{(i+1)}]\u2501\u2533\u2501[{app['packageName']}] [{app['appName']}]")
+            print("    \u2523\u2501 Description: " + app["shortDescription"])
             print("    \u2523\u2501 Company: " + app["companyName"])
             print("    \u2523\u2501 Version: " + str(app["versionCode"]))
-            print("    \u2517\u2501 Description: " + app["shortDescription"])
+            print("    \u2517\u2501 Updated: " + datetime.fromisoformat(app["updatedAt"]).strftime('%d.%m.%Y %H:%M'))
         try:
-            selection = int(input(f"[1-{len(apps)}]> ")) - 1
-            download_package(apps[selection]["packageName"])
-            return
-        except (SystemExit, KeyboardInterrupt):
-            sys.exit()
-        except:
+            selected_app = apps[int(input(f"[1-{len(apps)}]> ")) - 1]
+            if link_only:
+                return print_links(selected_app["packageName"])
+            else:
+                return download_package(selected_app["packageName"])
+        except Exception as e:
+            if type(e) in [KeyboardInterrupt, DownloadInterruptException]:
+                raise
             page_number += 1
 
 
 def main():
-    parser = argparse.ArgumentParser("rustoredl", description="Downloads an Android application by given package name from RuStore")
-    parser.add_argument("-l", "--link-only", help="Get direct download link, skip downloading", action='store_true')
+    parser = argparse.ArgumentParser(
+        prog="rustoredl",
+        description="Downloads an Android application by given package name from RuStore"
+    )
+
     subparsers = parser.add_subparsers(dest="sub")
-    search_parser = subparsers.add_parser(OperationMode.SEARCH.value, help="Search packages on RuStore by application name")
-    download_parser = subparsers.add_parser(OperationMode.DOWNLOAD.value, help="Download apk by package name immediately")
-    download_parser.add_argument("-p", "--package_name", help="Package name to download.", required=True, type=str)
+
+    search_parser = subparsers.add_parser(
+        OperationMode.SEARCH.value,
+        help="Search packages on RuStore by application name"
+    )
+    search_parser.add_argument(
+        "-l", "--link-only",
+        help="Get direct download link, skip downloading",
+        action='store_true'
+    )
+
+    download_parser = subparsers.add_parser(
+        OperationMode.DOWNLOAD.value,
+        help="Download apk by package name immediately"
+    )
+    download_parser.add_argument(
+        "-p", "--package-name",
+        help="Package name to download.",
+        required=True,
+        type=str
+    )
+
+    get_link_parser = subparsers.add_parser(
+        OperationMode.GETLINK.value,
+        help="Get direct download link for apk by package name"
+    )
+    get_link_parser.add_argument(
+        "-p", "--package-name",
+        help="Package name to download.",
+        required=True,
+        type=str
+    )
 
     parsed_args = parser.parse_args()
-    
-    if parsed_args.sub == OperationMode.SEARCH.value:
-        return search()
-    
-    if parsed_args.sub == OperationMode.DOWNLOAD.value:
-        if (parsed_args.link_only):
-            return print_links(parsed_args.package_name)
-        else:
+
+    try:
+        if parsed_args.sub == OperationMode.SEARCH.value:
+            return search(parsed_args.link_only)
+
+        if parsed_args.sub == OperationMode.DOWNLOAD.value:
             return download_package(parsed_args.package_name)
-    
+
+        if (parsed_args.sub == OperationMode.GETLINK.value):
+            return print_links(parsed_args.package_name)
+    except (NoSuchPackageException, DownloadInterruptException) as e:
+        print(e)
+        return
+    except KeyboardInterrupt:
+        return
+
     parser.print_help()
 
 

@@ -4,6 +4,13 @@ import random
 
 DEBUG = False
 
+
+class OperationMode(Enum):
+    DOWNLOAD = "download"
+    SEARCH = "search"
+    GETLINK = "getlink"
+
+
 def debug_print(data):
     if DEBUG:
         pprint(data)
@@ -14,9 +21,12 @@ def get_random_hex(length):
 
 
 def get_random_device_id():
-    return get_random_hex(16) + "--" + str(random.randrange(100000000, 999999999))
+    return f"{get_random_hex(16)}--{random.randrange(100000000, 999999999)}"
 
 
-class OperationMode(Enum):
-    DOWNLOAD = "download"
-    SEARCH = "search"
+class NoSuchPackageException(Exception):
+    pass
+
+
+class DownloadInterruptException(Exception):
+    pass
