@@ -1,5 +1,5 @@
 ## RuStoreDL
-Утилита для быстрого поиска и скачивания пакетов приложений Android (.apk) из RuStore. Поддреживаемая версия Python $\geq$ 3.6
+Утилита для быстрого поиска и скачивания пакетов приложений Android (.apk) из RuStore.
 
 ### Установка
 
@@ -10,7 +10,7 @@ git clone https://github.com/avoidcode/rustoredl.git
 
 ```sh
 cd rustoredl
-pip install .
+pip3 install .
 ```
 Установка с помощью `setuptools`
 ```sh
