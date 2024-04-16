@@ -10,7 +10,7 @@ from colorama import Fore, Style
 from tqdm.auto import tqdm
 from datetime import datetime
 
-from util import *
+from .util import *
 
 BASE_URL = "https://backapi.rustore.ru/"
 
