@@ -22,25 +22,32 @@ python setup.py install
 
 ```
 $ rustoredl --help
-usage: rustoredl [-h] [-l] {search,download} ...
+usage: rustoredl [-h] {search,download,getlink} ...
 
 Downloads an Android application by given package name from RuStore
 
 positional arguments:
-  {search,download}
-    search           Search packages on RuStore by name
-    download         Download apk by package name immediately
+  {search,download,getlink}
+    search              Search packages on RuStore by application name
+    download            Download apk by package name immediately
+    getlink             Get direct download link for apk by package name
 
 options:
-  -h, --help         show this help message and exit
-  -l, --link-only    Get direct download link, skip downloading
+  -h, --help            show this help message and exit
 ```
 
 ### Поиск
 
-![image](https://github.com/avoidcode/rustoredl/assets/51087676/dff3782c-db5e-4951-94d0-ec6f00d2f34d)
+![image](https://github.com/avoidcode/rustoredl/assets/51087676/13a6dd86-d86b-4f6d-b87b-4b5bdba95feb)
+
 
 
 ### Скачивание по имени пакета
 
-![image](https://github.com/avoidcode/rustoredl/assets/51087676/07ff9e69-a3a8-4863-ab30-35ec01da5494)
+![image](https://github.com/avoidcode/rustoredl/assets/51087676/49eea155-1ea9-477d-9132-73ce52f4c134)
+
+### Получение прямой ссылки на скачивание
+
+![image](https://github.com/avoidcode/rustoredl/assets/51087676/9433e806-43f8-494e-8a23-767c83ac161e)
+
+
